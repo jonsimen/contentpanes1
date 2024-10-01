@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.* // For layout components
 import androidx.compose.material3.Button
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.* // For state management
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,49 +27,116 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SimpleContentPanesApp() {
-    var lives = remember { mutableStateOf(6) }
+    var letterCorrect = remember { mutableStateOf(false) }
+    var snackbarVisibleState = remember { mutableStateOf(false) }
+    var lives = rememberSaveable { mutableIntStateOf(6) }
+    var hintCount = rememberSaveable { mutableIntStateOf(3) }
+    var clickedItems = rememberSaveable { mutableListOf("") }
     val windowInfo = calculateCurrentWindowInfo()
     val items = listOf('a', 'b', 'c', 'd','e','f','g','k','o','t','l','i','n') // sample tasks
     val word = listOf('k','o','t','l','i','n')
-    var clickedItems = remember { mutableListOf("") }
-    var letters = remember{mutableListOf(Triple("",false, false ), Triple("",false,false))}
-    var hintCount by remember{ mutableIntStateOf(3) }
-    if (windowInfo.isWideScreen) {
+    if(lives.intValue <= 0){
+        //end game
+        Column {
+        Text("GAME OVER")
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = {
+            lives.intValue = 6
+            clickedItems = mutableListOf("")
+            hintCount.intValue = 3
+        }) {
+            Text("Reset")
+        }
+        }
+    }
+    else if(word.all { char ->
+            clickedItems.any { string -> char in string }
+        }){
+        //end game
+        Column {
+            Text("YOU WIN")
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = {
+                lives.intValue = 6
+                clickedItems = mutableListOf("")
+                hintCount.intValue = 3
+            }) {
+                Text("Reset")
+            }
+        }
+    }
+    else if (windowInfo.isWideScreen) {
         // Two-pane layout for wide screens, one for the task list
         // the other for the task details
         Row(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.weight(1f)) {
-                ChooseLetterPane(lives = lives, onLifeLost = { lives.value-- }, items, word)
+                ChooseLetterPane(lives = lives, items, word, letterCorrect, snackbarVisibleState)
                 Spacer(modifier = Modifier.height(16.dp))
-                HintPane(lives = lives, onLifeLost = { lives.value-- }, clickedItems, hintCount, onHint = {hintCount-- })
-                Text(lives.value.toString())
-                Text("$hintCount")
+                HintPane(lives = lives, hintCount = hintCount)
+                Text(lives.intValue.toString())
+                Text(hintCount.intValue.toString())
+                Text(clickedItems.toString())
+                if (snackbarVisibleState.value) {
+                    Snackbar(
+                        action = {
+                            Button(onClick = {
+                                snackbarVisibleState.value = false //dismiss on click
+
+                            }) {
+                                Text("Dismiss")
+                            }
+                        },
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        if (letterCorrect.value) {
+                            Text(text = "Correct")
+                        } else {
+                            Text(text = "Wrong")
+                        }
+                    }
+                }
+
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-            VisualPane(letters)
-            if(lives.value == 0){
-                //end game
-                //snackbar
-                Text("GAME OVER")
-            }}
+            VisualPane(lives)
+            }
         }
     } else {
         Column {
-            VisualPane(letters)
-            ChooseLetterPane(lives = lives, onLifeLost = { lives.value-- }, items, word)
+            VisualPane(lives)
+            ChooseLetterPane(lives = lives, items, word, letterCorrect, snackbarVisibleState)
+            if (snackbarVisibleState.value) {
+                Snackbar(
+                    action = {
+                        Button(onClick = {
+                            snackbarVisibleState.value = false //dismiss on click
+
+                        }) {
+                            Text("Dismiss")
+                        }
+                    },
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    if (letterCorrect.value) {
+                        Text(text = "Correct")
+                    } else {
+                        Text(text = "Wrong")
+                    }
+                }
+            }
         }
     }
+
 }
 
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ChooseLetterPane(lives: MutableState<Int>, onLifeLost: () -> Unit, letters: List<Char>, word:List<Char>, modifier: Modifier = Modifier,) {
-    var clickedLetters = mutableListOf<Char>()
+fun ChooseLetterPane(lives: MutableState<Int>, letters: List<Char>, word:List<Char>, letterCorrect: MutableState<Boolean>, snackbarVisibleState:MutableState<Boolean>, modifier: Modifier = Modifier) {
+    var clickedLetters = mutableListOf<Char>() //need to change this to top level declaration
     val buttonStates = remember { mutableStateMapOf<Char, Boolean>() }
         Text(
             text = "Choose A Letter",
@@ -88,11 +156,13 @@ fun ChooseLetterPane(lives: MutableState<Int>, onLifeLost: () -> Unit, letters: 
             //if not in word, increment picture variable
             onClick = {
                 if (letter in word){
-                    //snackbar saying no
+                    snackbarVisibleState.value = true
+                    letterCorrect.value = true
                 }
                 else{
-                    onLifeLost()
-                    //snackbar saying yes
+                    lives.value -=1
+                    snackbarVisibleState.value = true
+                    letterCorrect.value = false
                 }
                 buttonStates[letter] = false
                 clickedLetters.add(letter)
@@ -106,28 +176,31 @@ fun ChooseLetterPane(lives: MutableState<Int>, onLifeLost: () -> Unit, letters: 
 
         }
     }
-}}
+    }
+
+}
 
 @Composable
-fun HintPane(lives: MutableState<Int>, onLifeLost: () -> Unit, clicked: List<String>, hintCount: Int, onHint: () -> Unit, modifier: Modifier = Modifier) {
+fun HintPane(lives: MutableState<Int>, hintCount: MutableState<Int>) {
     // Task details pane used when the user selects a particular task
     Button(onClick = {
-        if(hintCount==3) {
-            onHint()
-            //snackbar "It's your favorite coding language!"
-            //do first hint
+        when(hintCount.value){
+            3 ->{
+                hintCount.value--
+                //snackbar "It's your favorite coding language!"
+                //do first hint
+            }
+            2 -> {
+                hintCount.value--
+                lives.value--
+                //do second hint
+            }
+            1 -> {
+                hintCount.value--
+                lives.value--
+                //do third hint
+            }
         }
-        else if(hintCount==2){
-            onHint()
-            lives.value -=1
-            //do second hint
-        }
-        else if(hintCount==1){
-            onLifeLost()
-            onHint()
-            //do second hint
-        }
-        else{}
     }
     )
         {
@@ -136,17 +209,58 @@ fun HintPane(lives: MutableState<Int>, onLifeLost: () -> Unit, clicked: List<Str
 }
 
 @Composable
-fun VisualPane(letters: List<Triple<String, Boolean, Boolean>>, modifier: Modifier = Modifier) {
+fun VisualPane(lives: MutableState<Int>) {
         Text(
             text = "Visual Pane",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
-    Image(
-        painter = painterResource(id = R.drawable.preyingboy),
-        contentDescription = "preying mantis"
-        //size modifier so it doesn't go off screen
-    )
+    when(lives.value){
+        6 -> {
+            Image(
+                painter = painterResource(id = R.drawable.preyingboy),
+                contentDescription = "preying mantis"
+                //size modifier so it doesn't go off screen
+            )
+        }
+        5 -> {
+            Image(
+                painter = painterResource(id = R.drawable.cat),
+                contentDescription = "cat"
+                //size modifier so it doesn't go off screen
+            )
+        }
+        4 -> {
+            Image(
+                painter = painterResource(id = R.drawable.preyingboy),
+                contentDescription = "preying mantis"
+                //size modifier so it doesn't go off screen
+            )
+        }
+        3 -> {
+            Image(
+                painter = painterResource(id = R.drawable.preyingboy),
+                contentDescription = "preying mantis"
+                //size modifier so it doesn't go off screen
+            )
+        }
+        2 -> {
+            Image(
+                painter = painterResource(id = R.drawable.preyingboy),
+                contentDescription = "preying mantis"
+                //size modifier so it doesn't go off screen
+            )
+        }
+        1 -> {
+            Image(
+                painter = painterResource(id = R.drawable.preyingboy),
+                contentDescription = "preying mantis"
+                //size modifier so it doesn't go off screen
+            )
+        }
+
+    }
+
 }
 
 @Composable
