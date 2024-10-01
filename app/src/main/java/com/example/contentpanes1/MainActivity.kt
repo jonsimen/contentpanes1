@@ -218,43 +218,43 @@ fun VisualPane(lives: MutableState<Int>) {
     when(lives.value){
         6 -> {
             Image(
-                painter = painterResource(id = R.drawable.preyingboy),
-                contentDescription = "preying mantis"
+                painter = painterResource(id = R.drawable.one),
+                contentDescription = "five lives"
                 //size modifier so it doesn't go off screen
             )
         }
         5 -> {
             Image(
-                painter = painterResource(id = R.drawable.cat),
-                contentDescription = "cat"
+                painter = painterResource(id = R.drawable.two),
+                contentDescription = "four lives"
                 //size modifier so it doesn't go off screen
             )
         }
         4 -> {
             Image(
-                painter = painterResource(id = R.drawable.preyingboy),
-                contentDescription = "preying mantis"
+                painter = painterResource(id = R.drawable.three),
+                contentDescription = "three lives"
                 //size modifier so it doesn't go off screen
             )
         }
         3 -> {
             Image(
-                painter = painterResource(id = R.drawable.preyingboy),
-                contentDescription = "preying mantis"
+                painter = painterResource(id = R.drawable.four),
+                contentDescription = "two lives"
                 //size modifier so it doesn't go off screen
             )
         }
         2 -> {
             Image(
-                painter = painterResource(id = R.drawable.preyingboy),
-                contentDescription = "preying mantis"
+                painter = painterResource(id = R.drawable.five),
+                contentDescription = "one life"
                 //size modifier so it doesn't go off screen
             )
         }
         1 -> {
             Image(
-                painter = painterResource(id = R.drawable.preyingboy),
-                contentDescription = "preying mantis"
+                painter = painterResource(id = R.drawable.six),
+                contentDescription = "no lives"
                 //size modifier so it doesn't go off screen
             )
         }
