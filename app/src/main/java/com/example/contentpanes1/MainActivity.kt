@@ -31,15 +31,15 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SimpleContentPanesApp() {
-    var letterCorrect = remember { mutableStateOf(false) }
-    var snackbarVisibleState = remember { mutableStateOf(false) }
-    var lives = rememberSaveable { mutableIntStateOf(6) }
-    var hintCount = rememberSaveable { mutableIntStateOf(3) }
-    var clickedItems = remember { mutableStateListOf<Char>() }
+    val letterCorrect = remember { mutableStateOf(false) }
+    val snackbarVisibleState = remember { mutableStateOf(false) }
+    val lives = rememberSaveable { mutableIntStateOf(6) }
+    val hintCount = rememberSaveable { mutableIntStateOf(3) }
+    val clickedItems = remember { mutableStateListOf<Char>() }
     val windowInfo = calculateCurrentWindowInfo()
-    val items = listOf('a', 'b', 'c', 'd','e','f','g','k','o','t','l','i','n') // sample tasks
+    val items = listOf('a', 'l', 't', 'n','k','b','i','e','d','g','f','o','c') // sample tasks
     val word = listOf('k','o','t','l','i','n')
-    var showHint = remember { mutableStateOf(false) }
+    val showHint = remember { mutableStateOf(false) }
     if(lives.intValue <= 0){
         //end game
         Column {
@@ -240,6 +240,7 @@ fun HintPane(lives: MutableState<Int>, hintCount: MutableState<Int>, showHint: M
         if(lives.value==1){
             Toast.makeText(context, "Hint not available", Toast.LENGTH_SHORT).show()
         }
+        else{
         when(hintCount.value){
             3 ->{
                 hintCount.value--
@@ -277,6 +278,7 @@ fun HintPane(lives: MutableState<Int>, hintCount: MutableState<Int>, showHint: M
             }
         }
     }
+    }
     )
         {
         Text("Click for a hint!")
@@ -286,7 +288,7 @@ fun HintPane(lives: MutableState<Int>, hintCount: MutableState<Int>, showHint: M
 @Composable
 fun VisualPane(lives: MutableState<Int>) {
         Text(
-            text = "Visual Pane",
+            text = "Draw-Circle (legally distinct from hangman)",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
